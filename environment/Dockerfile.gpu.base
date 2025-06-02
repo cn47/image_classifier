@@ -1,0 +1,71 @@
+FROM nvidia/cuda:12.2.0-devel-ubuntu22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+        jq \
+        less \
+        procps \
+        locales \
+        tree \
+        vim \
+        wget \
+        unzip \
+        zip \
+        grep \
+        git \
+        libgomp1 \
+        sudo \
+    && localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# fonts(RictyDiminished)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        fontconfig \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && cd /home \
+    && wget https://github.com/mzyy94/RictyDiminished-for-Powerline/raw/master/RictyDiminished-Regular.ttf \
+    && cp /home/RictyDiminished-Regular.ttf /usr/share/fonts/ \
+    && rm -rf /home/**/.cache/matplotlib/fontlist-*
+
+### ユーザ設定
+ARG USER=jupyter
+
+RUN useradd -m --uid 1000 -G sudo,root ${USER} \
+    && echo "jupyter ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers.d/1000
+
+WORKDIR /home/${USER}
+
+USER ${USER}
+
+### 環境変数
+ENV PATH=${PATH}:/home/jupyter/.local/bin \
+    LANG=ja_JP.UTF-8 \
+    LANGUAGE=ja_JP:ja \
+    LC_ALL=ja_JP.UTF-8 \
+    TZ=Asia/Tokyo \
+    TERM=xterm-256color \
+    PYTHONUTF8=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_NO_CACHE_DIR=off \
+    NVIDIA_VISIBLE_DEVICES=all
+
+### pytohn環境構築
+# install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# install python
+ARG PYTHON_VER
+RUN uv python install ${PYTHON_VER}
+
+# python環境
+RUN uv venv
+
+# install jupyter&ipykernel
+RUN uv pip install --no-cache jupyterlab==4.4.1 \
+    && uv run python -m ipykernel install --user --name=python3 --display-name jupyterlab-python3
+
+CMD ["bash"]

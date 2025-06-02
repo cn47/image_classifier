@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  jupyterlab-gpu:
+    image: ${IMAGE_NAME}
+    container_name: jupyterlab-${FLAVOR}
+    runtime: ${RUNTIME}
+    user: 1000:1000
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BASE_IMAGE=cn47/${IMAGE_NAME}
+    working_dir: ${WORKING_DIR}
+    environment:
+      - PYTHONPATH=
+    volumes:
+      - ${HOME}/projects:/home/jupyter/projects # MOUNT_HOST_HOME
+      - bashrc:/home/jupyter/.bashrc # MOUNT_BASHRC
+    expose:
+      - ${PORT:-8888}
+    ports:
+      - ${PORT:-8888}:${PORT:-8888}
+    tty: true
+    entrypoint: >
+      uv run jupyter-lab
+        --allow-root
+        --ip=0.0.0.0 --port=${PORT:-8888}
+        --no-browser
+        --NotebookApp.token=''
+        --NotebookApp.password=''
+        --NotebookApp.disable_check_xsrf=True
