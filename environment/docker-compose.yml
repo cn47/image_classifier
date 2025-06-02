@@ -12,7 +12,7 @@ services:
         - BASE_IMAGE=cn47/${IMAGE_NAME}
     working_dir: ${WORKING_DIR}
     environment:
-      - PYTHONPATH=
+      - PYTHONPATH=${WORKING_DIR}/src
     volumes:
       - ${HOME}/projects:/home/jupyter/projects # MOUNT_HOST_HOME
       - ./bashrc:/home/jupyter/.bashrc # MOUNT_BASHRC
