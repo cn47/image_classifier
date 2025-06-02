@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   jupyterlab-gpu:
     image: ${IMAGE_NAME}
@@ -17,7 +15,7 @@ services:
       - PYTHONPATH=
     volumes:
       - ${HOME}/projects:/home/jupyter/projects # MOUNT_HOST_HOME
-      - bashrc:/home/jupyter/.bashrc # MOUNT_BASHRC
+      - ./bashrc:/home/jupyter/.bashrc # MOUNT_BASHRC
     expose:
       - ${PORT:-8888}
     ports:
