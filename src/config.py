@@ -3,6 +3,8 @@ import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+import pendulum
+
 from torchvision import transforms
 
 
@@ -13,7 +15,7 @@ _pj_dir = Path(__file__).parents[1]
 @dataclass
 class PathConfig:
     train_data_dir: Path = _pj_dir / "datasets" / "train"
-    output_dir: Path = _pj_dir / "outputs"
+    model_output_dir: Path = _pj_dir / "models" / pendulum.now("Asia/Tokyo").format("YYYYMMDD_HHmmss")
 
 
 ### Trainer関連

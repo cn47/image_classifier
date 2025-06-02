@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 import torch
 
@@ -71,6 +73,12 @@ class DatasetManager:
     def class_to_idx(self) -> dict[str, int]:
         return self._class_to_idx
 
+    def save_class_to_idx(self) -> None:
+        output_file = self.config.path.model_output_dir / "class_to_idx.json"
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_file, "w") as f:
+            json.dump(self.class_to_idx, f, indent=4, ensure_ascii=False)
+
     @property
     def class_data_counts(self) -> pd.DataFrame:
         train_counts = torch.bincount(torch.tensor(self.train_dataset.dataset.targets)[self.train_dataset.indices])
@@ -85,6 +93,6 @@ class DatasetManager:
         )
 
     def save_class_data_counts(self) -> None:
-        output_file = self.config.path.output_dir / "train_class_data_counts.tsv"
+        output_file = self.config.path.model_output_dir / "train_class_data_counts.tsv"
         output_file.parent.mkdir(parents=True, exist_ok=True)
         self.class_data_counts.to_csv(output_file, index=False, sep="\t")

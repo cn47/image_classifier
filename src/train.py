@@ -1,10 +1,3 @@
-import sys
-
-from pathlib import Path
-
-
-sys.path.append(Path(__file__).parent.as_posix())
-
 from config import Config
 from dataset_manager import DatasetManager
 from torch import nn

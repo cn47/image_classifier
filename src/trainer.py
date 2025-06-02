@@ -23,7 +23,7 @@ class EarlyStopping:
 
     @property
     def output_model_file(self) -> Path:
-        return self.config.path.output_dir / "classifier.pth"
+        return self.config.path.model_output_dir / "classifier.pth"
 
     def __call__(self, val_score: float, model: nn.Module) -> None:
         patience = self.config.trainer.early_stopping.patience
@@ -69,7 +69,7 @@ class Trainer:
         self.model = model
         self.dataloaders = dataloaders
         self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.output_dir = self.config.path.output_dir
+        self.output_dir = self.config.path.model_output_dir
 
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters(), **self.config.trainer.optimizer)
