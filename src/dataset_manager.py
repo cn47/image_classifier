@@ -70,14 +70,14 @@ class DatasetManager:
         return len(self._class_names)
 
     @property
-    def class_to_idx(self) -> dict[str, int]:
-        return self._class_to_idx
+    def idx_to_class(self) -> dict[str, int]:
+        return {v: k for k,v in self._class_to_idx.items()}
 
-    def save_class_to_idx(self) -> None:
-        output_file = self.config.path.model_output_dir / "class_to_idx.json"
+    def save_idx_to_class(self) -> None:
+        output_file = self.config.path.model_output_dir / "idx_to_class.json"
         output_file.parent.mkdir(parents=True, exist_ok=True)
         with open(output_file, "w") as f:
-            json.dump(self.class_to_idx, f, indent=4, ensure_ascii=False)
+            json.dump(self.idx_to_class, f, indent=4, ensure_ascii=False)
 
     @property
     def class_data_counts(self) -> pd.DataFrame:

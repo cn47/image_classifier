@@ -14,8 +14,10 @@ _pj_dir = Path(__file__).parents[1]
 ### Path関連
 @dataclass
 class PathConfig:
+    pj_dir: Path = _pj_dir
     train_data_dir: Path = _pj_dir / "datasets" / "train"
     model_output_dir: Path = _pj_dir / "models" / pendulum.now("Asia/Tokyo").format("YYYYMMDD_HHmmss")
+
 
 
 ### Trainer関連

@@ -19,6 +19,7 @@ def main():
     )
 
     trainer.fit()
+    dataset_manager.save_idx_to_class()
 
 
 if __name__ == "__main__":
