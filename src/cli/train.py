@@ -1,7 +1,5 @@
 from config import Config
 from dataset_manager import DatasetManager
-from torch import nn
-from torchvision import models
 from trainer import Trainer
 
 
@@ -9,17 +7,15 @@ def main():
     config = Config()
     dataset_manager = DatasetManager(config)
 
-    model = models.resnet18(pretrained=True)
-    model.fc = nn.Linear(in_features=model.fc.in_features, out_features=dataset_manager.n_classes)
+    model_type = "resnet18"
 
     trainer = Trainer(
         config,
-        model=model,
+        model_type=model_type,
         dataloaders=dataset_manager.get_loaders(),
     )
 
     trainer.fit()
-    dataset_manager.save_idx_to_class()
 
 
 if __name__ == "__main__":

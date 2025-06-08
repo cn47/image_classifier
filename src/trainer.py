@@ -5,25 +5,23 @@ import torch
 
 from config import Config
 from IPython.display import clear_output
+from models_registry import get_model
 from plot import plot_classification_report, plot_learning_curve
 from sklearn.metrics import classification_report, roc_auc_score
 from torch import nn, optim
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 
 class EarlyStopping:
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, output_model_file: Path) -> None:
         self.config = config
         self.counter = 0  # 連続で改善しなかった回数
         self.best_score = None
         self.early_stop = False  # 早期終了フラグ
         self.best_model_weights = None  # ベストモデルの重み保存用
-
-    @property
-    def output_model_file(self) -> Path:
-        return self.config.path.model_output_dir / "classifier.pth"
+        self.output_model_file = output_model_file
 
     def __call__(self, val_score: float, model: nn.Module) -> None:
         patience = self.config.trainer.early_stopping.patience
@@ -61,23 +59,25 @@ class Trainer:
     def __init__(
         self,
         config: Config,
-        model: nn.Module,
+        model_type: str,
         dataloaders: dict[str, DataLoader],
         device: torch.device | None = None,
     ) -> None:
         self.config = config
-        self.model = model
         self.dataloaders = dataloaders
         self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.output_dir = self.config.path.model_output_dir
+        self.output_dir = Path(f"{self.config.path.model_output_dir}_{model_type}")
+
+        self.model_type = model_type
+        self.model = get_model(model_type=self.model_type, n_classes=len(self._get_class_names()), pretrained=True)
 
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters(), **self.config.trainer.optimizer)
         self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, **self.config.trainer.scheduler)
 
         # AMP用scaler
-        self.scaler = GradScaler()
-        self.early_stopping = EarlyStopping(config)
+        self.scaler = GradScaler(device=self.device)
+        self.early_stopping = EarlyStopping(config, output_model_file=self.output_dir / "classifier.pth")
 
         self.history = {
             "train_loss": [],
@@ -91,9 +91,13 @@ class Trainer:
         self.model.to(self.device)
         torch.backends.cudnn.benchmark = True
 
+    def _get_class_names(self) -> list[str]:
+        """クラス名を取得する"""
+        return self.dataloaders["train"].dataset.dataset.classes
+
     @property
     def class_names(self) -> list[str]:
-        return self.dataloaders["train"].dataset.dataset.classes
+        return self._get_class_names()
 
     def generate_train_report(self):
         """トレーニングの進捗と結果を表示・保存する
@@ -117,6 +121,24 @@ class Trainer:
         with (self.output_dir / "roc_auc.txt").open("w") as fp:
             fp.write(f"val AUC: {auc_score:.4f}")
 
+    def save_model_type(self) -> None:
+        """モデルのタイプを保存する"""
+        output_file = self.output_dir / "model_type.json"
+        self.output_file.parent.mkdir(parents=True, exist_ok=True)
+        data = {"model_type": self.model_type}
+        with output_file.open("w") as fp:
+            json.dump(data, fp, indent=4, ensure_ascii=False)
+
+    @property
+    def idx_to_class(self) -> dict[str, int]:
+        return {v: k for k, v in self.dataloaders["train"].dataset.dataset.class_to_idx.items()}
+
+    def save_idx_to_class(self) -> None:
+        output_file = self.output_dir / "idx_to_class.json"
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        with output_file.open("w") as fp:
+            json.dump(idx_to_class, fp, indent=4, ensure_ascii=False)
+
     def fit(self) -> None:
         n_epochs = self.config.trainer.n_epochs
         for epoch in range(n_epochs):
@@ -135,6 +157,9 @@ class Trainer:
             self.generate_train_report()
             print(f"Epoch {epoch + 1} completed.\n")
 
+        self.save_model_type()
+        self.save_idx_to_class()
+
     def _run_epoch(self, phase: str) -> None:
         is_train = phase == "train"
         self.model.train() if is_train else self.model.eval()
@@ -150,7 +175,7 @@ class Trainer:
             self.optimizer.zero_grad()
 
             with torch.set_grad_enabled(is_train):
-                with autocast(enabled=is_train):  # AMP(自動混合精度)
+                with autocast(device_type=self.device.type, enabled=is_train):  # AMP(自動混合精度)
                     outputs = self.model(inputs)
                     loss = self.criterion(outputs, labels)
 

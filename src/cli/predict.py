@@ -7,20 +7,21 @@ from predictor import Predictor
 def main():
     config = Config()
 
-    input_dir = config.path.pj_dir / "requests" / "inputs"
-    output_dir = config.path.pj_dir / "requests" / "outputs"
+    # 最新のモデルを取得
     model_dir = config.path.pj_dir / "models"
     model_dir = max(model_dir.iterdir(), key=lambda p: p.stat().st_mtime)
 
+    # 出力ディレクトリ名にモデルのバージョンを含める
+    input_dir = config.path.pj_dir / "requests" / "inputs"
+    output_dir = config.path.pj_dir / "requests" / "outputs" / model_dir.parts[-1]
+
     # Predictorのインスタンスを作成
-    predictor = Predictor(
-        transform=config.dataset_manager.transforms.val,
-        model_dir=model_dir,
-    )
+    predictor = Predictor(transform=config.dataset_manager.transforms.val, model_dir=model_dir)
     predictor.load_model()
 
     # 入力ディレクトリに対してバッチ推論
-    results = predictor.batch_predict(input_dir)
+    #results = predictor.batch_predict(input_dir)
+    results, errors = predictor.batch_predict(input_dir)
 
     # クラス別に出力ディレクトリを作成
     for class_name in predictor.idx_to_class.values():
@@ -31,12 +32,15 @@ def main():
         class_name = result["class_name"]
         img_file = result["img_file"]
         output_file = output_dir / class_name / img_file.name
+
+        if output_file.exists():
+            print(f"File {output_file} already exists. Overwriting...")
+            continue
+
         shutil.copy(img_file, output_file)
 
-    # Notes:
-    # 画像のコピーのときに同ファイル名があった場合は上書きされる。
-    # もし上書きしたくない場合は、output_file.exists()をチェックして、
-    # 既存のファイル名に連番を付けるなどの処理を追加する必要がある。
+    print(f"Results saved to {output_dir}")
+    print(f"Errors: {errors}")
 
 
 if __name__ == "__main__":
