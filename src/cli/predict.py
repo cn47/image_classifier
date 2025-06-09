@@ -20,7 +20,6 @@ def main():
     predictor.load_model()
 
     # 入力ディレクトリに対してバッチ推論
-    #results = predictor.batch_predict(input_dir)
     results, errors = predictor.batch_predict(input_dir)
 
     # クラス別に出力ディレクトリを作成

@@ -1,3 +1,5 @@
+import json
+
 from pathlib import Path
 
 import numpy as np
@@ -121,10 +123,9 @@ class Trainer:
         with (self.output_dir / "roc_auc.txt").open("w") as fp:
             fp.write(f"val AUC: {auc_score:.4f}")
 
-    def save_model_type(self) -> None:
-        """モデルのタイプを保存する"""
+    def _save_model_type(self) -> None:
         output_file = self.output_dir / "model_type.json"
-        self.output_file.parent.mkdir(parents=True, exist_ok=True)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
         data = {"model_type": self.model_type}
         with output_file.open("w") as fp:
             json.dump(data, fp, indent=4, ensure_ascii=False)
@@ -133,11 +134,11 @@ class Trainer:
     def idx_to_class(self) -> dict[str, int]:
         return {v: k for k, v in self.dataloaders["train"].dataset.dataset.class_to_idx.items()}
 
-    def save_idx_to_class(self) -> None:
+    def _save_idx_to_class(self) -> None:
         output_file = self.output_dir / "idx_to_class.json"
         output_file.parent.mkdir(parents=True, exist_ok=True)
         with output_file.open("w") as fp:
-            json.dump(idx_to_class, fp, indent=4, ensure_ascii=False)
+            json.dump(self.idx_to_class, fp, indent=4, ensure_ascii=False)
 
     def fit(self) -> None:
         n_epochs = self.config.trainer.n_epochs
@@ -157,8 +158,8 @@ class Trainer:
             self.generate_train_report()
             print(f"Epoch {epoch + 1} completed.\n")
 
-        self.save_model_type()
-        self.save_idx_to_class()
+        self._save_model_type()
+        self._save_idx_to_class()
 
     def _run_epoch(self, phase: str) -> None:
         is_train = phase == "train"
