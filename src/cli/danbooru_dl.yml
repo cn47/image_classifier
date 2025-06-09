@@ -1,0 +1,8 @@
+# Example usage of the DanbooruDownloader
+# https://danbooru.donmai.us/wiki_pages/help:cheatsheet
+# This file is used to configure the DanbooruDownloader for downloading images from Danbooru.
+- tags:    # str:  ex. "karyl_(princess_connect!) 1girl rating:general"
+  title:   # str:  ex. "プリコネ_キャルちゃん"
+  limit:   # int:  ex. 20
+  sample:  # bool: ex. true
+  verbose: # bool: ex. false

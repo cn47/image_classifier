@@ -13,6 +13,8 @@ services:
     working_dir: ${WORKING_DIR}
     environment:
       - PYTHONPATH=${WORKING_DIR}/src
+    env_file:
+      - .env
     volumes:
       - ${HOME}/projects:/home/jupyter/projects # MOUNT_HOST_HOME
       - ./bashrc:/home/jupyter/.bashrc # MOUNT_BASHRC

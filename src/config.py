@@ -19,7 +19,6 @@ class PathConfig:
     model_output_dir: Path = _pj_dir / "models" / pendulum.now("Asia/Tokyo").format("YYYYMMDD_HHmmss")
 
 
-
 ### Trainer関連
 @dataclass
 class EarlyStoppingConfig:
@@ -100,3 +99,11 @@ class Config:
 
     def asdict(self) -> dict:
         return asdict(self)
+
+
+@dataclass
+class DanbooruConfig:
+    username: str = os.getenv("DANBOORU_USERNAME")
+    api_key: str = os.getenv("DANBOORU_API_KEY")
+    output_dir: Path = _pj_dir / "datasets" / "danbooru"
+    sleep_time: float = 1.0
