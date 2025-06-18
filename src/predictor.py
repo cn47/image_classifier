@@ -16,7 +16,6 @@ from tqdm import tqdm
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
-### Predictorの抽象クラス設計
 class Predictor:
     def __init__(
         self,
