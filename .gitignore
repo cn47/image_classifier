@@ -194,5 +194,6 @@ cython_debug/
 .cursorindexingignore
 
 
-datasets
-models
+datasets/
+models/
+requests/
